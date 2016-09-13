@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="TrainMapper">
+	
+	
+	<!-- 查询试题列表 -->
+	<select id="selQuestionList" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select * from tra_question where training_id = #{trainId} and state = 1 order by sort asc  
+	
+	</select>
+	
+	
+	<!-- 查询试题选项列表 -->
+	<select id="selQuestionItemList" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select * from tra_question_item where training_id = #{trainId} and state = 1 
+	
+	</select>
+	
+	<!-- 通过培训id查询培训信息 -->
+	<select id="selTrainInfo" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+			select * from tra_info where training_id = #{trainId} and state = 1 
+	
+	</select>
+	
+	
+	<!-- 查询培训文件 -->
+	<select id="selTrainFile" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select * from tra_file where training_id = #{trainId} and state = 1
+	
+	</select>
+	
+	
+	<!-- 插入培训资质 -->
+	<insert id="insertTrainResult" parameterType="cn.shendiao.train.model.UcaTraining">
+		
+		insert into uca_training(user_id,training_id,valid_date,
+		
+					state,create_date,last_mod)
+
+			values(
+			
+			#{user_id},#{training_id},#{valid_date},
+			
+			#{state},#{create_date},#{last_mod}
+			
+			)
+
+			on DUPLICATE key update user_id = #{user_id},training_id = #{training_id}, 
+
+			valid_date = #{valid_date},state = #{state} ,last_mod = #{last_mod}
+		
+	
+	</insert>
+	
+	
+	<!-- 查询用户获得培训资质总数 -->
+	<select id="selTrainCount" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+	
+		select count(*) from uca_training 
+		
+		where state = 1 and valid_date >= CURRENT_DATE 
+		
+		and user_id = #{userId}
+	
+	</select>
+	
+	<!-- 查询培训商家列表 -->
+	
+	<select id="selUserTrainMer" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	
+		<!-- select DISTINCT mm.*,tmt.merchant_name merchant_type_name 
+
+				from uca_training ut 
+			
+				join tra_info ti on ut.training_id = ti.training_id 
+			
+				join mer_merchant mm on mm.merchant_id = ti.merchant_id
+			
+				join t_merchant_type tmt on mm.merchant_type = tmt.merchant_type
+			
+				where ut.user_id = #{userId} and ut.state = 1 
+				
+				and ut.valid_date >= CURRENT_DATE -->
+				
+		select DISTINCT mm.*,tmt.merchant_name merchant_type_name 
+			
+				from tra_info ti  
+			
+				join mer_merchant mm on mm.merchant_id = ti.merchant_id
+			
+				join t_merchant_type tmt on mm.merchant_type = tmt.merchant_type
+			
+				where ti.state = 1		
+				
+				limit ${start},${rows}
+				
+	</select>
+	
+	
+	<!-- 查询用户商家培训列表 -->
+	<select id="selUserMerTrain" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	
+		select ti.*,(case when ut.user_id > 0 then 1 else 0 end ) trainState 
+
+				from tra_info ti  
+
+			 left join uca_training ut on ut.training_id = ti.training_id 
+			 
+			 and ut.user_id = #{userId} and ut.state = 1  and ut.valid_date >= CURRENT_DATE 
+			
+			where ti.merchant_id = #{merchantId} and ti.state = 1
+			
+			and now() >= ti.begin_date and ti.end_date >=now()
+			
+			limit ${start},${rows}
+	
+	</select>
+	
+	
+</mapper>

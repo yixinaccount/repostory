@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="OfficeMapper">
+	
+	<!-- 判断用户接案条件 -->
+	<select id="ifMatchCondition" parameterType="java.util.HashMap" resultType="java.util.HashMap" statementType="CALLABLE">
+	
+			 <![CDATA[	
+				
+		    {call proc_uca_condition (#{userId,mode=IN,jdbcType=INTEGER},
+		    
+									    #{taskId,mode=IN,jdbcType=INTEGER},
+									    
+									    #{code,mode=OUT,jdbcType=INTEGER},
+									    
+									    #{descs,mode=OUT,jdbcType=VARCHAR})
+									    
+									  } 
+		     
+		      ]]>
+ 
+	</select>
+	
+	<!-- 插入用户接案信息 -->
+	<insert id="insertUserRecTask" parameterType="cn.shendiao.office.model.UcaInfo" useGeneratedKeys="true" keyProperty="usercase_id">
+	
+		insert into uca_info(case_id,user_id,uca_state,last_uca_state,
+		
+		state,create_date,last_mod) 
+		
+			values(
+			
+				#{case_id},#{user_id},#{uca_state},#{last_uca_state},
+				
+				#{state},#{create_date},#{last_mod}
+				
+			)
+	
+	</insert>
+	
+	<!-- 插入用户案件日志变更 -->
+	<insert id="insertUserTaskStateLog" parameterType="cn.shendiao.office.model.UcaStateLog"> 
+	
+		insert into uca_state_log(usercase_id,case_id,user_id,uca_state,
+		
+			last_uca_state,state,create_date,last_mod
+			
+		)
+		 values(
+		 
+		 	#{usercase_id},#{case_id},#{user_id},#{uca_state},
+		 	
+		 	#{last_uca_state},#{state},#{create_date},#{last_mod}
+		 
+		 )
+	
+	</insert>
+	
+	<!-- 查询用户完成案件总数 -->
+	<select id="selFinishTaskCount" resultType="java.lang.Integer" parameterType="java.lang.Integer">
+	
+			select count(*) from uca_info where user_id = #{userId} 
+			
+			and state = 1 
+			
+			and uca_state in (
+			
+			select uca_state_type from uca_state_type 
+			
+			where is_end_state = 1  )
+	
+	</select>
+	
+	
+	<!-- 查询用户完成案件列表 -->
+	<select id="selUserFinishTask" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	
+		select ui.*,ust.name task_state_name,mm.icon,ti.task_name,ti.task_id,
+		
+				ti.task_end_date,ms.shop_name,ms.shop_address,asa.post_address
+
+
+				 from uca_info ui 
+					
+					join uca_state_type ust on ui.uca_state = ust.uca_state_type 
+					
+					join task_shop ts on ui.case_id = ts.case_id 
+					
+					join task_info ti on ts.task_id = ti.task_id
+					
+					join mer_shop ms on ms.shop_id = ts.shop_id 
+					
+					join addr_std_address asa on ms.std_addr_id = asa.std_addr_id 
+					
+					join mer_merchant mm on ti.merchant_id = mm.merchant_id
+					
+					where ui.user_id = #{userId} and ui.state = 1 
+					
+					and ui.uca_state in (select uca_state_type 
+					
+					from uca_state_type where is_end_state = 1 and state = 1 )
+					
+					order by ui.last_mod desc 
+					
+					limit ${start},${rows}
+						
+	</select>
+	
+	
+	<!-- 查询用户未完成案件列表 -->
+	<select id="selUserNoFinTask" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select ui.*,ust.name task_state_name,ust.reason,ust.uca_state_type,mm.icon,ti.task_name,ti.task_id,
+
+				ti.task_end_date,ms.shop_name,ms.shop_address,asa.post_address
+				
+				 from uca_info ui 
+				
+				join uca_state_type ust on ui.uca_state = ust.uca_state_type 
+				
+				join task_shop ts on ui.case_id = ts.case_id 
+				
+				join task_info ti on ts.task_id = ti.task_id
+				
+				join mer_shop ms on ms.shop_id = ts.shop_id 
+				
+				join addr_std_address asa on ms.std_addr_id = asa.std_addr_id 
+				
+				join mer_merchant mm on ti.merchant_id = mm.merchant_id
+				
+				where ui.user_id = #{userId} and ui.state = 1 
+				
+				and ui.uca_state in (select uca_state_type 
+				
+				from uca_state_type where is_end_state = 0 and state = 1 )
+
+	
+	</select>
+	
+	<!-- 查询用户办案详情 -->
+	<select id="selUserOfficeDetail" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select ui.*,ust.name task_state_name,ust.reason,ust.uca_state_type,ust.next_state,
+		
+				mm.icon,ti.task_name,ti.task_id,ti.task_amount,
+
+				ti.task_end_date,ms.shop_name,ms.shop_address,ms.shop_id,asa.post_address
+				
+				 from uca_info ui 
+				
+				join uca_state_type ust on ui.uca_state = ust.uca_state_type 
+				
+				join task_shop ts on ui.case_id = ts.case_id 
+				
+				join task_info ti on ts.task_id = ti.task_id
+				
+				join mer_shop ms on ms.shop_id = ts.shop_id 
+
+				join addr_std_address asa on ms.std_addr_id = asa.std_addr_id 
+				
+				join mer_merchant mm on ti.merchant_id = mm.merchant_id
+
+				where ui.usercase_id = #{userCaseId}
+	
+	</select>
+	
+	<!-- 查询用户办案状态列表 -->
+	<select id="selUserOfficeState" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select usl.*,ust.name,ust.reason,ust.descs,ust.uca_state_type 
+		
+			from uca_state_log usl 
+
+			join uca_state_type ust 
+	
+			on usl.uca_state = ust.uca_state_type 
+			
+			where usl.state = 1
+	
+			and usl.usercase_id = #{userCaseId}
+	
+	</select>
+	
+	
+	<!-- 查询用户接案信息 -->
+	<select id="selUcaInfo" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select * from uca_info where usercase_id = #{userCaseId}
+		
+	</select>
+	
+	
+	<!-- 更新用户办案状态 -->
+	<update id="updateUcaInfoState" parameterType="java.util.HashMap">
+	
+		update uca_info set uca_state = #{ucaState},
+		
+			last_uca_state = #{lastUcaState},last_mod = now() 
+			
+			where usercase_id = #{userCaseId}
+	
+	</update>
+	
+	
+	<!-- 查询用户到店距离 -->
+	<select id="selDistance" parameterType="java.util.HashMap" resultType="java.lang.String">
+	
+		select get_distance(#{sign_in_latitude},#{sign_in_longitude},ms.latitude,ms.longitude) distance 
+		
+				from uca_info ui join task_shop ts on ui.case_id = ts.case_id 
+
+				join mer_shop ms on ts.shop_id = ms.shop_id 
+
+				where ui.usercase_id = #{userCaseId}
+	
+	</select>
+	
+	<!-- 插入用户签到 -->
+	<insert id="addUserSignIn" parameterType="cn.shendiao.office.model.UcaSign" useGeneratedKeys="true" keyProperty="id">
+	
+		insert into uca_sign(user_id,usercase_id,sign_in_date,
+		
+				sign_in_longitude,sign_in_latitude,sign_out_date,sign_out_longitude,
+				
+				sign_out_latitude,state,create_date,last_mod) 
+		
+		values(
+			
+			#{user_id},#{usercase_id},#{sign_in_date},
+			
+			#{sign_in_longitude},#{sign_in_latitude},#{sign_out_date},#{sign_out_longitude},
+			
+			#{sign_out_latitude},#{state},#{create_date},#{last_mod}
+		
+		)
+	
+	</insert>
+	
+	
+	<!-- 用户签出 -->
+	<update id="updateUserSignOut" parameterType="java.util.HashMap">
+	
+		update uca_sign set sign_out_date = now(),sign_out_longitude = #{sign_out_longitude},
+		
+				sign_out_latitude = #{sign_out_latitude} ,last_mod = now()
+				
+				where usercase_id = #{userCaseId}
+	
+	</update>
+	
+	<!-- 查询案件审核消息 -->
+	<select id="selCheckInfo" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select * from uca_check_usercase where usercase_id = #{userCaseId} 
+		
+			order by create_date desc limit 0,1
+	
+	</select>
+	
+	
+	<!-- 添加用户调研答案 -->
+	<insert id="addUserSurveyAnswer" parameterType="cn.shendiao.office.model.UcaPaper">
+	
+		insert into uca_paper(user_id,usercase_id,task_id,paper_id,
+		
+						question_id,select_answer,text_answer,
+						
+						photo_answer,state,create_date,last_mod)
+
+			values(
+			
+					#{user_id},#{usercase_id},#{task_id},#{paper_id},
+					
+					#{question_id},#{select_answer},#{text_answer},
+					
+					#{photo_answer},#{state},#{create_date},#{last_mod}
+			
+			)
+
+			on DUPLICATE key update user_id = #{user_id},usercase_id = #{usercase_id}, task_id = #{task_id},
+			
+					paper_id = #{paper_id} , question_id = #{question_id},select_answer = #{select_answer},
+					
+					text_answer = #{text_answer},photo_answer = #{photo_answer},last_mod = #{last_mod}
+
+	
+	</insert>
+	
+	
+	<!-- 添加用户调研审核表 -->
+	<insert id="insertUcaCheck" parameterType="cn.shendiao.office.model.UcaCheckUsercase">
+	
+		insert into uca_check_usercase(usercase_id,usercase_state,content,
+		
+				state,create_date,last_mod)
+		
+		values(
+		
+			#{usercase_id},#{usercase_state},#{content},
+			
+			#{state},#{create_date},#{last_mod}
+		
+		)
+	
+	</insert>
+	
+	<!-- 查询用户答案 -->
+	<select id="selUserSurveyAnswer" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	
+		select * from uca_paper 
+		
+			where user_id = #{userId} and usercase_id = #{userCaseId}
+			
+			and task_id = #{taskId} and state = 1
+	
+	</select>
+	
+	
+	<!-- 查询用户签到信息 -->
+	<select id="selUserSignIn" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select * from uca_sign where usercase_id = #{userCaseId} 
+		
+			order by sign_in_date desc limit 0,1 
+	
+	</select>
+	
+	
+</mapper>

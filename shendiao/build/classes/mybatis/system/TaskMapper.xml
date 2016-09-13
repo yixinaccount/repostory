@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="TaskMapper">
+	
+	
+	<!-- 查询案件试题列表 -->
+	<select id="selTaskQuesList" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select * from task_question where task_id = #{taskId} and state = 1 order by sort asc 
+	
+	</select>
+	
+	
+	<!-- 查询案件试题选项列表 -->
+	
+	<select id="selTaskQuesItemList" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		 select * from task_question_item where task_id = #{taskId} and state = 1
+	
+	</select>
+
+
+	<!-- 查询任务列表 -->
+	<select id="selTaskList" resultType="java.util.HashMap" parameterType="java.util.HashMap">
+	
+		select ti.*,tcc.name level_name,tmt.merchant_name merchant_type_name,mm.icon,
+
+	IFNULL(ts1.allTask,0) allTask,IFNULL(ts2.remainTask,0) remainTask
+		
+			from task_info ti  left join 
+			
+			(select tc.id,tc.task_id,uel.name 
+			
+							from task_condition  tc 
+							
+							join user_exp_level uel on tc.param1 = uel.level 
+			
+							where condition_id = 5) tcc 
+
+						on ti.task_id = tcc.task_id
+						
+						join mer_merchant mm on mm.merchant_id = ti.merchant_id 
+						
+						join t_merchant_type tmt on mm.merchant_type = tmt.merchant_type
+						
+						left join 
+						
+						(select count(*) allTask,task_id 
+						
+							from task_shop where state in (1,2) group by task_id ) ts1 
+						
+						on ts1.task_id = ti.task_id
+						
+						left join 
+						
+							(select count(*) remainTask,task_id 
+							
+								from task_shop where state = 1 group by task_id ) ts2
+						
+						on ts2.task_id = ti.task_id
+						
+						where ti.state = 1
+
+						and CURRENT_TIMESTAMP >=ti.show_date
+
+						and ti.accept_end_date >= CURRENT_TIMESTAMP 
+
+						order by ti.show_date desc  
+						
+						limit ${start},${rows}
+							
+	
+	</select>
+	
+	
+	
+	<!-- 查询任务详情 -->
+	<select id="selTaskDetailByTaskId" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select ti.*,tcc.name level_name,tmt.merchant_name merchant_type_name ,mm.icon,
+
+			mm.merchant_name,mm.state merchant_state,
+	
+			IFNULL(ts1.allTask,0) allTask,IFNULL(ts2.remainTask,0) remainTask
+			
+				from task_info ti  left join 
+				
+				(select tc.id,tc.task_id,uel.name 
+				
+							from task_condition  tc 
+							
+							join user_exp_level uel on tc.param1 = uel.level 
+			
+							where tc.condition_id = 5 and tc.state = 1) tcc 
+
+						on ti.task_id = tcc.task_id
+						
+						join mer_merchant mm on mm.merchant_id = ti.merchant_id 
+						
+						join t_merchant_type tmt on mm.merchant_type = tmt.merchant_type
+						
+						left join 
+						
+						(select count(*) allTask,task_id 
+						
+							from task_shop where state in (1,2) and task_id = #{taskId}) ts1 
+						
+						on ts1.task_id = ti.task_id
+						
+						left join 
+						
+							(select count(*) remainTask,task_id 
+							
+								from task_shop where state = 1 and task_id = #{taskId} ) ts2
+						
+						on ts2.task_id = ti.task_id
+						
+						where ti.state = 1 and ti.task_id = #{taskId}
+	
+	</select>
+	
+	
+	<!-- 查询任务培训列表 -->
+	<select id="selTaskTrainByTaskId" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	
+	
+		<!-- select tt.*,ti.training_name from task_training tt join tra_info ti 
+
+			on tt.training_id = ti.training_id 
+
+			where tt.task_id = #{taskId} and ti.state = 1  -->
+			
+			
+			select tt.*,ti.training_name ,(case when ut.user_id > 0 then 1 else 0 end ) trainState
+
+				from task_training tt join tra_info ti 
+
+				on tt.training_id = ti.training_id 
+
+				left join uca_training ut on ut.training_id = tt.training_id 
+				
+				and ut.user_id = #{userId} and ut.valid_date >= CURRENT_DATE and ut.state = 1
+
+			where tt.task_id =#{taskId}  and ti.state = 1 
+			
+			 and now() >= ti.begin_date and ti.end_date >=now() 
+			
+	
+	</select>
+	
+	
+	<!-- 查询任务条件 -->
+	<select id="selTaskCondition" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select tc.*,tcc.type condition_type,tcc.expression,
+
+			tcc.param_num,tcc.descs config_descs
+
+			from task_condition tc 
+
+			join task_condition_config tcc 
+
+			on tc.condition_id = tcc.condition_id 
+
+			where tc.state = 1 and tcc.state = 1 and tc.task_id = #{taskId}
+	
+	</select>
+	
+	<!-- 查询机构详情 -->
+	<select id="selMerchantDetail" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select  mm.*,tmt.merchant_name merchant_type_name 
+
+			from mer_merchant mm join t_merchant_type tmt 
+	
+			on mm.merchant_type = tmt.merchant_type 
+	
+				where mm.merchant_id = #{merchantId} 
+	
+	</select>
+	
+	<!-- 查询任务省列表 -->
+	<select id="selTaskProvince" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		<!-- select DISTINCT asa3.name,asa3.detail_name,asa3.std_addr_code 
+
+				from task_shop ts join mer_shop ms on ts.shop_id = ms.shop_id 
+
+				join addr_std_address asa on ms.std_addr_id = asa.std_addr_id
+
+				join addr_std_address asa2 on asa.parent_addr_code = asa2.std_addr_code
+
+				join addr_std_address asa3 on asa2.parent_addr_code = asa3.std_addr_code
+
+				where ts.task_id = #{taskId} and ts.state = 1 -->
+				
+		select DISTINCT asa2.name,asa2.detail_name,asa2.std_addr_code 
+
+				from task_shop ts join mer_shop ms on ts.shop_id = ms.shop_id 
+
+				join addr_std_address asa on ms.std_addr_id = asa.std_addr_id
+
+				join addr_std_address asa2 on asa.std_addr_code  like concat(asa2.std_addr_code,'%')  and asa2.level= 1
+
+				
+				where ts.task_id = #{taskId} and ts.state = 1		
+				
+				
+	
+	</select>
+	
+	<!-- 查询任务市列表 -->
+	<select id="selTaskCity" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		<!-- select DISTINCT asa2.name,asa2.detail_name,asa2.std_addr_code 
+
+				from task_shop ts join mer_shop ms on ts.shop_id = ms.shop_id 
+
+				join addr_std_address asa on ms.std_addr_id = asa.std_addr_id
+
+				join addr_std_address asa2 on asa.parent_addr_code = asa2.std_addr_code
+
+				where asa2.parent_addr_code = #{parentAddrCode} and ts.state = 1 -->
+			
+		select DISTINCT asa2.name,asa2.detail_name,asa2.std_addr_code 
+
+				from task_shop ts join mer_shop ms on ts.shop_id = ms.shop_id 
+
+				join addr_std_address asa on ms.std_addr_id = asa.std_addr_id
+
+				join addr_std_address asa2 on asa.std_addr_code  like concat(asa2.std_addr_code,'%')  and asa2.level= 2
+
+				
+				where asa2.std_addr_code like concat( #{parentAddrCode} ,'%')  and ts.state = 1
+		
+				
+			
+	
+	</select>
+	
+	<!-- 查询任务区列表 -->
+	<select id="selTaskCounty" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		<!-- select DISTINCT asa.name,asa.detail_name,asa.std_addr_code 
+
+				from task_shop ts join mer_shop ms on ts.shop_id = ms.shop_id 
+
+				join addr_std_address asa on ms.std_addr_id = asa.std_addr_id
+
+				
+				where asa.parent_addr_code = #{parentAddrCode} and ts.state = 1 -->
+				
+				
+		select DISTINCT asa2.name,asa2.detail_name,asa2.std_addr_code 
+
+				from task_shop ts join mer_shop ms on ts.shop_id = ms.shop_id 
+
+				join addr_std_address asa on ms.std_addr_id = asa.std_addr_id
+
+				join addr_std_address asa2 on asa.std_addr_code  like concat(asa2.std_addr_code,'%')  and asa2.level= 3
+
+				where asa2.std_addr_code like concat( #{parentAddrCode} ,'%')  and ts.state = 1
+	
+	</select>
+	
+	
+	<!-- 查询门店任务列表 -->
+	<select id="selTaskMerList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	
+		select distinct ts.case_id,ts.task_id,ms.*,asa.std_addr_code
+
+				from task_shop ts 
+
+				join mer_shop ms on ts.shop_id = ms.shop_id 
+		
+				join addr_std_address asa on asa.std_addr_id = ms.std_addr_id 
+					
+				where ts.task_id  = #{taskId} and ts.state = 1 
+			
+			
+			<if test="siftCode != null">
+			
+				and  asa.std_addr_code like CONCAT(#{siftCode},'%')
+			
+			</if>
+		
+				limit ${start},${rows}
+	
+	</select>
+	
+	<!-- 更新案件门店状态 -->
+	<update id="updateTaskShopState" parameterType="java.util.HashMap">
+	
+		update task_shop set state = #{state},last_mod = now() where case_id = #{caseId}
+	
+	</update>
+	
+	
+	<!-- 查询任务门店详情 -->
+	<select id="selShopTaskDetail" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select ms.*,asa.post_address,ts.task_id  
+		
+			from task_shop ts join mer_shop ms on ts.shop_id = ms.shop_id 
+	
+			join addr_std_address asa on asa.std_addr_id  = ms.std_addr_id 
+	
+			where ts.case_id = #{caseId}
+			
+	</select>
+	
+	<!-- 查询门店任务信息 -->
+	<select id="selTaskShopInfo" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select * from task_shop where case_id = #{caseId}
+	
+	</select>
+	
+	<!-- 查询任务信息 -->
+	<select id="selTaskInfo" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select * from task_info where task_id = #{taskId}
+	
+	</select>
+	
+	<!-- 查询案件审核总数 -->
+	<select id="selectCaseCheckCount" resultType="java.lang.Integer">
+	
+		select count(*) from uca_check_usercase where state = 1
+	
+	</select>
+	
+	
+	<!-- 查询案件审核列表 -->
+	<select id="selectCaseCheckList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	
+		select ucu.id,ucu.usercase_id,ui.user_id,ts.task_id,ts.shop_id, 
+
+				ti.task_name,ti.task_range,ti.task_desc,ms.short_name,ms.shop_name,uu.realname
+
+
+				from uca_check_usercase ucu 
+		
+			join uca_info ui on ucu.usercase_id = ui.usercase_id
+
+			join user_user uu on uu.user_id = ui.user_id
+
+
+			join  task_shop ts on ui.case_id = ts.case_id
+
+			join mer_shop ms on ts.shop_id = ms.shop_id
+
+
+			join task_info ti on ti.task_id = ts.task_id
+
+			where ucu.state = 1 order by ucu.last_mod
+			
+			limit ${start},${rows}
+	
+	</select>
+	
+	
+	<!-- 查询任务审核信息 -->
+	<select id="selCheckCaseInfo" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select * from uca_check_usercase where id = #{checkCaseId}
+	
+	</select>
+	
+	<!-- 更新用户任务审核状态-->
+	<update id="updateCheckCaseState" parameterType="java.util.HashMap">
+	
+		update uca_check_usercase set state = #{state},operator_id = #{operatorId},content = #{checkContent},last_mod = now()
+		
+						where id = #{checkCaseId}
+	
+	</update>
+	
+
+</mapper>

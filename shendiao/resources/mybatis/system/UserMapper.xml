@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="UserMapper">
+	
+	
+	<!-- 添加短信验证码 -->
+	<insert id="addValidateCode" parameterType="cn.shendiao.user.model.LoginValidCode">
+	
+		insert into mid_login_valid_code(tel,valid_code,state,create_date)
+			values(
+					#{tel},#{valid_code},#{state},#{create_date}
+			)
+	
+	</insert>
+	
+	
+	<!-- 根据手机号和密码查询用户 -->
+	<select id="selUserByNameAndPwd" parameterType="java.util.HashMap" resultType="cn.shendiao.user.model.User">
+	
+		select * from user_user where cellphone = #{phone} and userpwd = #{password} and state in (1,2,3,4)
+	
+	</select>
+	
+	
+	<!-- 根据手机号查询用户信息 -->
+	<select id="selectUserInfoByPhone" parameterType="java.lang.String" resultType="java.util.HashMap">
+	
+		select * from user_user where cellphone = #{phone}
+	
+	</select>
+	
+	<!-- 添加用户信息 -->
+	<insert id="addUserInfo" parameterType="cn.shendiao.user.model.User" useGeneratedKeys="true" keyProperty="user_id">
+	
+		insert into user_user(cellphone,userpwd,nickname,
+		
+		user_type,state,create_date,last_mod)
+		
+		values(#{cellphone},#{userpwd},#{nickname},
+		
+		#{user_type},#{state},#{create_date},#{last_mod})
+		
+		
+	</insert>
+	
+	<!-- 通过userid查询用户信息 -->
+	<select id="selUserByUserId" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select * from user_user where user_id = #{userId}
+	
+	</select>
+	
+	<!-- modify rainbow 2016-08-30 更新邀请码状态-->
+	<update id="updateInvitationCode" parameterType="java.util.HashMap">
+	
+		update user_invitation_code set user_id = #{userId},last_mod = now(),state=2 where invitation_code = #{invitationCode} and state=1	
+	</update>
+	<!-- 通过code查询邀请码 -->
+	<select id="selUserInvitationBycode" parameterType="java.lang.String" resultType="java.lang.Integer">
+	
+		select count(*) from user_invitation_code where invitation_code = #{invitationCode} and state=1
+		
+	</select>
+
+	<!-- end rainbow 2016-08-30 更新验证码状态============================= -->
+	
+	
+	
+	<!-- 更新用户密码 -->
+	<update id="updatePassword" parameterType="java.util.HashMap">
+	
+		update user_user set userpwd = #{password},last_mod = now() where user_id = #{userId}
+	
+	</update>
+	
+	<!-- 更新用户密码 -->
+	<update id="updatePassByPhone" parameterType="java.util.HashMap">
+	
+		update user_user set userpwd = #{password},last_mod = now() where cellphone = #{phone}
+	
+	</update>
+	
+	<!-- 更新用户昵称 -->
+	<update id="updateNickname" parameterType="java.util.HashMap">
+	
+		update user_user set nickname = #{nickname},last_mod = now() where user_id = #{userId}
+	
+	</update>
+	
+	<!-- 更新用户手机号 -->
+	<update id="updatePhone" parameterType="java.util.HashMap">
+	
+		update user_user set cellphone = #{phone},last_mod = now() where user_id = #{userId}
+	
+	</update>
+	
+	<!-- 查询用户所有级别 -->
+	<select id="selUserAllLevel" resultType="java.util.HashMap">
+	
+		select * from user_exp_level
+	
+	</select>
+	
+	<!-- 更新用户头像 -->
+	<update id="updateHeadPic" parameterType="java.util.HashMap">
+	
+		update user_user set head_pic = #{headPic},last_mod = now() where user_id = #{userId}
+	
+	</update>
+	
+	
+	<!-- 修改用户婚姻状态 -->
+	<update id="updateMarrystatus" parameterType="java.util.HashMap">
+	
+		update user_user set marital_status = #{status},last_mod = now() where user_id = #{userId}
+	
+	</update>
+	
+	<!-- 更新用户真实名和身份号 modify by rainbow-->
+	<update id="updateRealAndID"  parameterType="java.util.HashMap">
+	
+		update user_user set state = #{state},last_mod = now() 
+		
+			where user_id = #{userId} and state=4
+	
+	</update>
+	<!-- 更新用户真实名和身份号和状态(通过审核，为提交照片) add by rainbow-->
+	<update id="updateRealAndState"  parameterType="java.util.HashMap">
+	
+		update user_user set state = #{state},IDCard=#{IDCard},realname=#{realname},last_mod = now() 
+		
+			where user_id = #{userId} and state=1
+	
+	</update>
+	
+	<!-- 查询用户附加信息 -->
+	<select id="selUserAdditionInfo" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select * from user_addition where user_id = #{userId}
+	
+	</select>
+	
+	<!-- 查询用户支付信息 -->
+	<select id="selUserPaymentInfo" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select * from user_account_payment where state = 1 and user_id = #{userId}
+	
+	</select>
+	
+	
+	<!-- 插入用户身份信息 add addition_1 by rainbow -->
+	<insert id="insertIdentityInfo" parameterType="cn.shendiao.user.model.UserAddition">
+	
+		insert into user_addition(user_id,IDCard_front_pic,IDCard_back_pic,addition_1,
+		
+			state,create_date,last_mod) 
+			
+		values(
+			
+			#{user_id},#{IDCard_front_pic},#{IDCard_back_pic},#{addition_1},
+			
+			#{state},#{create_date},#{last_mod}
+		
+		)
+	
+	</insert>
+	
+	<!-- 修改用户附加信息 add addtion_1 by  rainbow-->
+	<update id="updateIdentityInfo" parameterType="cn.shendiao.user.model.UserAddition">
+	
+		update user_addition set IDCard_front_pic = #{IDCard_front_pic} ,addition_1=#{addition_1},
+		
+							IDCard_back_pic = #{IDCard_back_pic},last_mod = now()
+							
+							where id = #{id}		
+	
+	</update>
+	
+	
+	<!-- 查询用户个人消息未阅读总数 -->
+	<select id="selNoMessageCount" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+	
+		select count(*) from user_message where user_id = #{userId} and state = 1
+	
+	</select>
+	
+	
+	<!-- 查询用户系统消息未阅读数量 -->
+	<select id="selNoSysNotiCount" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+	
+		select count(*) from sys_notice 
+
+				where create_date >= ifnull((select max(last_reading)  
+				
+				from user_sys_notice where user_id = #{userId} ),'1900-1-1')
+	
+	</select>
+	
+	<!-- 查询用户系统通知列表 -->
+	<select id="selSysNotice" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	
+		select * from sys_notice where state = 1
+		
+			order by create_date desc 
+			
+			limit ${start},${rows}
+	
+	</select>
+	
+	<!-- 查询用户个人通知列表 -->
+	<select id="selUserMessage" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	
+		select * from user_message 
+		
+			where user_id = #{userId} and state != 0
+			
+			order by create_date desc 
+			
+			limit ${start},${rows}
+		
+	</select>
+	
+	<!-- 修改用户查看系统消息时间 -->
+	<insert id="updateSysNotTime" parameterType="cn.shendiao.user.model.UserSysNotice">
+	
+		 INSERT INTO user_sys_notice(user_id,last_reading,state,create_date,last_mod) 
+
+				VALUES(
+				
+				#{user_id},#{last_reading},#{state},
+				
+				#{create_date},#{last_mod}) 
+				
+ 		ON DUPLICATE KEY UPDATE  user_id = #{user_id},
+ 		
+ 		last_reading = #{last_reading},last_mod = #{last_mod}
+	
+	
+	</insert>
+	
+	
+	<!-- 修改用户个人消息状态 -->
+	<update id="updateUserMesState" parameterType="java.util.HashMap">
+	
+		update user_message set state = #{state},last_mod = now() where id = #{messageId}
+	
+	</update>
+	
+	<!-- 查询系统通知详情 -->
+	<select id="selSysNoticeDetail" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+			select * from sys_notice where id = #{sysNoticeId}
+	
+	</select>
+	
+	<!-- 查询个人消息详情 -->
+	<select id="selUserMesDetail" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select * from user_message where id = #{messageId}
+	
+	</select>
+	
+	
+	<!-- 查询系统参数 -->
+	<select id="selSysParams" resultType="java.util.HashMap">
+	
+		select * from sys_config_params 
+	
+	</select>
+	
+	<!-- 插入用户个人消息 -->
+	<insert id="addUserMessage" parameterType="cn.shendiao.user.model.UserMessage">
+	
+		insert into user_message(user_id,title,type,descs,
+		
+				state,create_date,last_mod)
+		
+		values(
+		
+			#{user_id},#{title},#{type},#{descs},
+			
+			#{state},#{create_date},#{last_mod}
+		
+		)
+	
+	</insert>
+	
+	
+	<!-- 修改用户学历状态 -->
+	<update id="updateEdustatus" parameterType="java.util.HashMap">
+	
+		update user_user set education = #{eduStatus},last_mod = now() where user_id = #{userId}
+	
+	</update>
+	
+	
+	<!-- 查询系统配置信息 -->
+	<select id="selConfigDetail" parameterType="java.lang.String" resultType="java.util.HashMap">
+	
+			select * from com_config_detail where type = #{type} and state = 1
+	
+	</select>
+	
+	
+	<!-- 添加用户反馈 -->
+	<insert id="addUserFeedback" parameterType="cn.shendiao.user.model.UserAppComm">
+	
+		insert into user_app_comments(user_id,content,state,create_date,last_mod)
+		
+		 	values(
+		 	
+		 		#{user_id},#{content},#{state},#{create_date},#{last_mod}
+		 	
+		 	)
+	
+	</insert>
+	
+	<!-- 添加身份信息认证 -->
+	<insert id="insertUserCertifi" parameterType="cn.shendiao.user.model.UserCertification">
+	
+		insert into user_certification(user_id,state,create_date,last_mod) 
+		
+				values(
+				
+				#{user_id},#{state},#{create_date},#{last_mod}
+				
+				)
+				
+	</insert>
+	
+	
+	
+	
+	
+	<!-- 判断用户名和密码 -->
+	<select id="getUserInfo" parameterType="cn.shendiao.login.model.Operator" resultType="cn.shendiao.login.model.Operator">
+		select * from t_operator 
+		where 1=1
+		<if test="login_name!=null and login_pwd!=null">
+		and login_name = #{login_name} and login_pwd=#{login_pwd}
+		</if>
+	</select>
+	
+	
+	<!-- 查询审核总数 -->
+	<select id="selectUserCheckCount" resultType="java.lang.Integer">
+	
+		select count(*) from user_certification where state = 1 
+	
+	</select>
+	
+	
+	<!-- 查询用户审核列表 -->
+	<select id="selectUserCheckList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	
+		select * from user_certification  uc 
+
+				join user_user uu 
+				
+				on uc.user_id = uu.user_id
+				
+				where uc.state = 1
+				
+				limit ${start},${rows}
+	
+	</select>
+	
+	
+	<!-- 查询审核详情 -->
+	<select id="selCheckDetail" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select uc.id,uc.user_id,ua.IDCard_front_pic,ua.IDCard_back_pic,
+		
+				ua.addition_1 IDHead_pic,
+				
+				uu.realname,uu.IDCard
+
+
+				from user_certification uc 
+			
+				join user_addition ua on uc.user_id = ua.user_id 
+			
+				join user_user uu on uc.user_id = uu.user_id
+				
+				where uc.id = #{checkId}
+		
+	
+	</select>
+	
+	
+	<!-- 更新用户审核 状态-->
+	<update id="updateCheckState" parameterType="java.util.HashMap">
+	
+		update user_certification set operator_id = #{operatorId},descs = #{checkContent},state = #{state},last_mod = now() 
+		
+			where user_id = #{userId}
+	
+	</update>
+	
+	
+	<!-- 更新用户状态 -->
+	<update id="updateUserState" parameterType="java.util.HashMap">
+	
+		update user_user set state = #{state},exp = #{exp},last_mod = now() 
+		
+			where user_id = #{userId}
+	
+	</update>
+	
+	
+</mapper>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>大人来也后台管理系统</title>
+<link rel="stylesheet" type="text/css" href="easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="easyui/themes/icon.css">
+<link rel="stylesheet" type="text/css" href="common/index.css">
+
+<script type="text/javascript" src="js/util/common.js"></script>
+<script type="text/javascript" src="easyui/jquery.min.js"></script>
+<script type="text/javascript" src="easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="easyui/locale/easyui-lang-zh_CN.js"></script>
+<script type="text/javascript" src="common/indexdata.js"></script>
+<style type="text/css">
+.fitem {
+	padding:5px 0;
+	margin-bottom:10px;
+	border-collapse: collapse;
+	border: solid 0px Black;
+}
+
+.fitem label {
+	
+	padding: 0px;
+}
+
+.fitem input {
+	width:120px;
+	padding: 0px;
+}
+</style>
+<script type="text/javascript" charset="UTF-8">
+	function submit(){
+		if($('#newpw').val()!=$('#renewpw').val()){
+			$.messager.alert("", "新密码两次输入不一致，请修改", "warning");
+			return;
+		}
+		
+		var fmurl = "changepwd.do";
+		$('#fm').form('submit', {
+			url : fmurl,
+			dataType : "json",
+			onSubmit : function() {
+				return $(this).form('validate');
+			},
+			success : function(result) {
+				result = eval('(' + result + ')');
+				if (result.success) {
+					$('#dlg').dialog('close');
+					$.messager.show({ // show error message  
+						title : '成功',
+						msg : result.successMsg
+					});
+				
+
+				} else {
+					$.messager.alert("提示",  result.errorMsg, "error");
+					return;
+
+				}
+
+			}
+		});
+	}
+
+	function changepw() {
+		$('#dlg').dialog('open').dialog('setTitle', '密码修改');
+		$('#fm').form('clear');
+	}
+
+	function closealltabs() {
+		$('.tabs-inner span').each(function(i, n) {
+			var t = $(n).text();
+			if (t != "主页") {
+				$('#framecenter').tabs('close', t);
+			}
+		});
+	}
+	// background: #B3DFDA;background:url('images/top_bg.jpg') no-repeat bottom left
+</script>
+</head>
+<body id="indexLayout" class="easyui-layout">
+	<div data-options="region:'north',border:false"
+		style="height: 59px; background: #03A8F6; padding: 0px">
+		<div
+			style="height: 59px; background: url('images/top_bg.jpg') 0 0 no-repeat; padding: 0px">
+			<!-- 		<h1>多媒体推送系统</h1> -->
+			<!-- <h1>Baby去哪儿后台管理系统</h1> -->
+			<span style="font-size: 30px;position: relative;padding-left: 2%;top: 10%"><!-- <img alt="" src="upload/img/1.jpg" width="30px" height="30px"> -->大人来也后台管理系统</span>
+			<span
+				style="float: right; position: relative; padding-right: 5%; top: 50%">
+				<a href="login.do?method=chkout"
+				class="l-btn l-btn-small l-btn-plain"> <span class="l-btn-left "><span
+						class="l-btn-text">安全退出</span></span></a>
+
+			</span> <span
+				style="float: right; position: relative; padding-right: 2%; top: 50%">
+				<a href="#" class="l-btn l-btn-small l-btn-plain"
+				onclick="changepw()"> <span class="l-btn-left "><span
+						class="l-btn-text">修改密码</span></span></a>
+
+
+			</span>
+		</div>
+	</div>
+	<div data-options="region:'west',split:true"  title="导航"
+		style="width: 178px; overflow: hidden; padding-bottom: 1px;">
+		<div class="easyui-accordion" id="accordion1" data-options="fit:true"
+			style="overflow: hidden; border: 0 px;"></div>
+	</div>
+
+
+	<!-- div data-options="region:'east',split:true,collapsed:true,title:'East'" style="width:100px;padding:10px;">st region</div> -->
+	<div data-options="region:'south',border:false"
+		style="height: 40px; background: #A9FACD; padding: 10px;">
+
+		<div style="text-align: center; font-size: 12px;">Copyright ©
+			2014 - 2016 , All Rights Reserved</div>
+	</div>
+
+	<div data-options="region:'center'" style="overflow: hidden;">
+		<div id="framecenter"
+			data-options="tools:'#tab-tools',border:false,fit:true"
+			style="overflow: hidden;"></div>
+		<div id="tab-tools">
+			<a href="#" class="easyui-linkbutton"
+				data-options="plain:true,iconCls:'icon-cancel'"
+				onclick="closealltabs()"></a>
+		</div>
+	</div>
+
+	<div id="masking" class="easyui-window" title="add"
+		data-options="closed:true" style="width: 300px; height: 180px;">
+		<!-- 		<div>欢迎访问http://www.my400800.cn</div> -->
+		<!-- 		<div style="padding: 5px; text-align: center;"> -->
+		<!-- 			<a href="#" class="easyui-linkbutton" icon="icon-ok">Ok</a> <a -->
+		<!-- 				href="#" class="easyui-linkbutton" icon="icon-cancel">Cancel</a> -->
+		<!-- 		</div> -->
+	</div>
+	<div id="dlg" class="easyui-dialog"
+		style="width: 400px; height: auto; padding: 0px 20px"
+		data-options="closed:true,iconCls:'icon-add',shadow :true,modal : true,
+		buttons:[{text:'确认',iconCls:'icon-ok',handler:function(){submit();}},
+		{text:'取消',iconCls:'icon-cancel',handler:function(){$('#dlg').dialog('close');}}
+		]">
+
+		<form id="fm" method="post">
+
+			<div class="fitem">
+				<label>请输入旧密码：</label> <input id="oldpw" name="oldpw"
+					type="password" />
+			</div>
+
+			<div class="fitem">
+
+				<label>请输入新密码：</label> <input id="newpw" name="newpw"
+					class="easyui-validatebox" data-options="required:true" />
+			</div>
+
+			<div class="fitem">
+
+				<label>请确认新密码：</label> <input id="renewpw" name="renewpw"
+					class="easyui-validatebox" data-options="required:true" />
+			</div>
+		</form>
+	</div>
+
+
+
+</body>
+</html>

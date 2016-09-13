@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AccountMapper">
+	
+	
+	<!-- 添加账户 -->
+	<insert id="addUserAccount" parameterType="cn.shendiao.account.model.UserAccount" useGeneratedKeys="true" keyProperty="account_id" >
+	
+		insert into user_account(user_id,state,create_date,last_mod)
+		
+				values(#{user_id},#{state},#{create_date},#{last_mod})
+	
+	</insert>
+	
+	
+	<!-- 添加用户账本 -->
+	<insert id="addUserAccbook" parameterType="cn.shendiao.account.model.UserAccountbook">
+	
+		insert into user_accountbook(account_id,user_id,accountitem_type,balance,
+		
+		opening_balance,state,create_date,last_mod) 
+		
+		values(#{account_id},#{user_id},#{accountitem_type},#{balance},
+		
+		#{opening_balance},#{state},#{create_date},#{last_mod})
+	
+	</insert>
+	
+	<!-- 查询用户银行信息 -->
+	<select id="selBankByUserId" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	
+		select * from user_account_payment where user_id = #{userId} and payment_type = #{paymentType} and state = 1
+	
+	</select>
+	
+	<!-- 通过userid查询用户账户 -->
+	<select id="selUserAccByUserId" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+	
+		select * from user_account where user_id = #{userId} and state = 1
+	
+	</select>
+	
+	<!-- 插入用户银行信息 -->
+	<insert id="insertBankInfo" parameterType="cn.shendiao.account.model.UserAccountPayment">
+	
+		insert into user_account_payment(user_id,account_id,payment_type,payment_code,
+		
+		payment_info1,payment_info2,state,create_date,last_mod)
+		
+		values(#{user_id},#{account_id},#{payment_type},#{payment_code},
+		
+		#{payment_info1},#{payment_info2},#{state},#{create_date},#{last_mod})
+	
+	</insert>
+	
+	<!-- 修改用户银行信息 -->
+	<update id="updateBankInfo" parameterType="cn.shendiao.account.model.UserAccountPayment">
+	
+		update user_account_payment set payment_code = #{payment_code},payment_info1 = #{payment_info1},
+		
+			payment_info2 = #{payment_info2} , last_mod = #{last_mod} where id = #{id} 
+	
+	</update>
+	
+	<!-- 插入用户支付宝信息 -->
+	<insert id="insertZhifubao" parameterType="cn.shendiao.account.model.UserAccountPayment">
+	
+		insert into user_account_payment(user_id,account_id,payment_type,payment_code,
+		
+			state,create_date,last_mod)
+		
+		values(#{user_id},#{account_id},#{payment_type},#{payment_code},
+		
+			#{state},#{create_date},#{last_mod})
+	
+	</insert>
+	
+	
+	<!--修改用户支付宝信息  -->
+	<update id="updateZhifubao" parameterType="cn.shendiao.account.model.UserAccountPayment">
+	
+		update user_account_payment set payment_code = #{payment_code},
+		
+				 last_mod = #{last_mod} where id = #{id} 
+	
+	
+	</update>
+	
+	
+	<!-- 查询用户账户余额 -->
+	<select id="selUserBalance" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	
+		select * from user_accountbook 
+		
+		where user_id = #{userId} and accountitem_type = #{accBookType} 
+		
+		and state = 1 
+	
+	</select>
+	
+	<!-- 查询用户提现金额 -->
+	<select id="selUserExtractCash" parameterType="java.lang.Integer" resultType="java.lang.String">
+	
+		select sum(amount) from user_extract_cash 
+		
+			where state = 1 and user_id = #{userId} 
+			
+			and deal_status in (0,1)
+	
+	</select>
+	
+	<!-- 查询用户总收益 -->
+	<select id="selUserAllIncome" parameterType="java.lang.Integer" resultType="java.lang.String">
+	
+		
+			select sum(income) from user_accountbook_change 
+			
+					where user_id = #{userId} and change_type = 1 
+						
+					and state = 1 
+	
+	</select>
+	
+	
+	
+	<!-- 查询用户提现列表 -->
+	<select id="selUserExtCashList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	
+		select * from user_extract_cash 
+		
+			where state = 1 and deal_status in (0,1) 
+			
+			and user_id = #{userId} order by create_date desc
+			
+			limit ${start},${rows}
+	
+	</select>
+	
+	<!-- 查询用户总收益列表 -->
+	<select id="selUserEarningsList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	
+		select ui.last_mod extract_cash_date,ui.usercase_id,ti.* from uca_info ui 
+
+				join task_shop ts on ui.case_id = ts.case_id 
+				
+				join task_info ti on ts.task_id = ti.task_id
+				
+				where ui.user_id = #{userId} and ui.uca_state = 11 and ui.state = 1
+				
+				order by ui.last_mod desc 
+				
+				limit ${start},${rows}
+	
+	</select>
+	
+	<!-- 添加用户现金变更 -->
+	<insert id="addUserAccExchh" parameterType="cn.shendiao.account.model.UserAccExchange">
+	
+		insert into user_acc_exchange(source_accbook_id,target_accbook_id,source_amount,
+		
+				target_amount,state,create_date,last_mod)
+				
+		values(
+		
+			#{source_accbook_id},#{target_accbook_id},#{source_amount},
+			
+			#{target_amount},#{state},#{create_date},#{last_mod}
+		
+		)
+	
+	</insert>
+	
+	<!-- 更新虚拟币账户信息 -->
+	<update id="updateVirAccBook" parameterType="java.util.HashMap">
+	
+		update user_accountbook set balance = #{virAccBalan} ,last_mod = now() where accountbook_id = #{virAccBookId} ;
+	
+	</update>
+	
+	
+	<!-- 更新现金账户信息 -->
+	<update id="updateCashAccBook" parameterType="java.util.HashMap">
+	
+		update user_accountbook set balance = #{cashAccBalan} ,last_mod = now() where accountbook_id = #{cashAccBookId} ;
+	
+	</update>
+	
+	<!-- 添加账户变更记录 -->
+	<insert id="addAccountChange" parameterType="cn.shendiao.account.model.UserAccountbookChange">
+	
+		insert into user_accountbook_change(accountbook_id,account_id,user_id,change_type,
+		
+				income,expend,balance,descs,
+				
+				state,create_date,last_mod
+			
+			)
+	
+		values (
+		
+			#{accountbook_id},#{account_id},#{user_id},#{change_type},
+			
+			#{income},#{expend},#{balance},#{descs},
+			
+			#{state},#{create_date},#{last_mod}
+		
+		)
+	
+	</insert>
+	
+
+	<!-- 添加用户提现记录 -->	
+	<insert id="addUserExtrCash" parameterType="cn.shendiao.account.model.UserExtractCash">
+	
+		insert into user_extract_cash(user_id,account_id,accountbook_id,payment_type,
+		
+			payment_code,payment_info1,amount,deal_status,
+			
+			state,create_date,last_mod
+		
+		)
+		
+		values(
+		
+			#{user_id},#{account_id},#{accountbook_id},#{payment_type},
+
+			#{payment_code},#{payment_info1},#{amount},#{deal_status},
+			
+			#{state},#{create_date},#{last_mod}
+		
+		)
+	
+	</insert>
+	
+	<!-- 查询用户支付信息 -->
+	<select id="selUserPayInfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	
+		select uap.*,uu.realname from user_account_payment uap 
+
+			join user_user uu on uap.user_id = uu.user_id 
+	
+			where uap.user_id = #{userId} and uap.payment_type = #{paymentType} and uap.state = 1
+	
+	</select>
+
+
+	<!-- 用户提现调存储过程 -->
+	<select id="addUserTiXian" parameterType="java.util.HashMap" resultType="java.util.HashMap" statementType="CALLABLE">
+	
+		 <![CDATA[	
+				
+		    {call proc_extract_cash (#{userId,mode=IN,jdbcType=INTEGER},
+		    
+									 #{amount,mode=IN,jdbcType=VARCHAR},
+									     
+									 #{paymentType,mode=IN,jdbcType=INTEGER},
+									     
+									 #{paymentCode,mode=IN,jdbcType=VARCHAR},
+									      
+									 #{paymentInfo,mode=IN,jdbcType=VARCHAR},
+									       
+									 #{paymentInfo2,mode=IN,jdbcType=VARCHAR},
+									    
+									 #{code,mode=OUT,jdbcType=INTEGER},
+									    
+									 #{descs,mode=OUT,jdbcType=VARCHAR})
+									    
+									  } 
+		     
+		      ]]>
+	
+	
+	</select>
+	
+	
+</mapper>
